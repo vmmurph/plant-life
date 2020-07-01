@@ -1,5 +1,6 @@
 /*
 add barriers
+add animations
 */
 
 /*

@@ -1,7 +1,7 @@
 // requires Tools.js
 
 function Plant (color = 0) {
-  this.name = 'Plant'
+  this.name = 'plant'
   this.asText = function () { return 'P' + this.size }
   this.size = 1
   this.tile = {}
@@ -13,7 +13,7 @@ function Plant (color = 0) {
     let chosenTile = neighbors[index]
     if (!chosenTile.obj) {
       // how fast the plant color mutates
-      let newColor = this.color + Tools.getRand(-100, 100)
+      let newColor = this.color + Tools.getRand(-50, 50)
       // these should correlate to the steps in Tools.getHexColor
       if (newColor < 0) newColor = 999
       if (newColor > 999) newColor = 0
@@ -22,7 +22,10 @@ function Plant (color = 0) {
   }
 
   this.grow = function () {
-    if (this.size < 4 && Tools.roll(50) ) {
+    // if (this.size < 4 && Tools.roll(50) ) {
+    //   this.size++
+    // }
+    if (this.size < 4) {
       this.size++
     }
   }
@@ -31,8 +34,14 @@ function Plant (color = 0) {
     this.propagate()
     this.grow()
   }
+}
 
-  return this
+function Barrier () {
+  this.name = 'barrier'
+  this.asText = '<>'
+  this.tile = {}
+
+  this.onTimeStep = () => {}
 }
 
 console.log('Organism.js loaded')
