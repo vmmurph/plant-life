@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Artificial Life</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="Tools.js"></script>
+    <script src="TileWorld.js"></script>
+    <script src="Organism.js"></script>
+    <style>
+      body { background-color: grey; }
+      .buttons {
+                margin-left: 42px;
+                margin-bottom: 20px;
+            }
+  </style>
+  </head>
+  <body>
+    <svg id="canvas" height='500' width='800'></svg>
+    <br />
+        <div class="buttons">
+            <button onclick="t.timeStep(); update();">Step</button>
+            <button id="start" onclick="startInterval()">Start</button>
+            <button id="stop" onclick="stopInterval()" disabled>Stop</button>
+        </div>
+
+    <script>
+      const gridWidth = 70
+      const gridHeight = 25
+      const cellSize = 20
+
+      var t = new TileWorld(gridWidth, gridHeight)
+      t.insert(new Plant(), 0, 0)
+
+      let margin = {
+        top: 20,
+        right: 20,
+        bottom: 50,
+        left: 50
+      }
+
+      let svg = d3.select('#canvas')
+      svg.attr('width', gridWidth * cellSize + margin.left + margin.right)
+         .attr('height', gridHeight * cellSize + margin.top + margin.bottom)
+
+      let width = svg.attr('width') - margin.left - margin.right
+      let height = svg.attr('height') - margin.top - margin.bottom
+      let g = svg.append('g').attr('transform', `translate(${margin.left}, ${margin.top})`)
+
+      let x = d3.scaleLinear().domain([0, t.width - 1]).range([0, width])
+      let y = d3.scaleLinear().domain([0, t.height - 1]).range([0, height])
+
+      let squares = g.selectAll('rect').data(t.flatGrid)
+      let squareSize = cellSize - 1
+
+      squares.enter()
+        .append('rect')
+          .attr('x', d => x(d.xloc) - (squareSize / 2))
+          .attr('y', d => y(d.yloc) - (squareSize / 2))
+          .attr('width', squareSize)
+          .attr('height', squareSize)
+          .attr('stroke', 'lightgrey')
+          .attr('fill', 'white')
+        
+
+      // plants
+      let p = svg.append('g').attr('transform', `translate(${margin.left}, ${margin.top})`)
+      const getPlantSize = d => {
+        let fullSize = cellSize - 1
+        return d.obj.size / 4 * fullSize
+      }
+      const getPlantColor = d => {
+        return Tools.getHexColor(d.obj.color)
+      }
+
+      let update = () => {
+        p.selectAll('rect').remove()
+        let plants = p.selectAll('rect').data(t.flatGrid.filter(e => e.obj))
+        plants.enter()
+          .append('rect')
+            .attr('x', d => x(d.xloc) - (getPlantSize(d) / 2))
+            .attr('y', d => y(d.yloc) - (getPlantSize(d) / 2))
+            .attr('rx', 5)
+            .attr('ry', 5)
+            .attr('width', getPlantSize)
+            .attr('height', getPlantSize)
+            .attr('fill', getPlantColor)
+      }
+      
+      update()
+
+      let interval
+      let startInterval = () => {
+          d3.select('#start').attr('disabled', true)
+          d3.select('#stop').attr('disabled', null)
+          interval = d3.interval(() => {
+              t.timeStep()
+              update()
+          }, 150)
+      }
+
+      let stopInterval = () => {
+          d3.select('#start').attr('disabled', null)
+          d3.select('#stop').attr('disabled', true)
+          interval.stop()
+      }
+    </script>
+  </body>
+</html>
