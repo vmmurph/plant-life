@@ -1,16 +1,16 @@
 /*
-add barriers
-add animations
-*/
-
-/*
 have an organism object with functions
   asText
   onTimestep
   locx, locy
 */
 
-function Tile () {
+function Tile (world, xloc = -1, yloc = -1) {
+  this.world = world
+  this.xloc = xloc
+  this.yloc = yloc
+  this.key = `(${xloc},${yloc})`
+  this.obj = null
   return this
 }
 
@@ -23,11 +23,7 @@ function TileWorld (width, height) {
   for (let x = 0; x < width; x++) {
     this.grid[x] = []
     for (let y = 0; y < height; y++) {
-      let t = new Tile()
-      t.xloc = x
-      t.yloc = y
-      t.obj = null
-      t.world = this
+      let t = new Tile(this, x, y)
       this.grid[x][y] = t
       this.flatGrid.push(t)
     }

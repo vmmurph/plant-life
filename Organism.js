@@ -9,11 +9,12 @@ function Plant (color = 0) {
 
   this.propagate = function () {
     let neighbors = this.tile.world.getNeighbors(this.tile.xloc, this.tile.yloc)
+    if (neighbors.length < 1) return
     let index = Math.floor(Math.random() * neighbors.length)
     let chosenTile = neighbors[index]
     if (!chosenTile.obj) {
       // how fast the plant color mutates
-      let newColor = this.color + Tools.getRand(-50, 50)
+      let newColor = this.color + Tools.getRand(-75, 75)
       // these should correlate to the steps in Tools.getHexColor
       if (newColor < 0) newColor = 999
       if (newColor > 999) newColor = 0
@@ -22,10 +23,7 @@ function Plant (color = 0) {
   }
 
   this.grow = function () {
-    // if (this.size < 4 && Tools.roll(50) ) {
-    //   this.size++
-    // }
-    if (this.size < 4) {
+    if (this.size < 4 && Tools.roll(50) ) {
       this.size++
     }
   }

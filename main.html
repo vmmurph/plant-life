@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Artificial Life</title>
+    <title>Plant Life</title>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="Tools.js"></script>
     <script src="TileWorld.js"></script>
     <script src="Organism.js"></script>
     <style>
-      body { background-color: grey; }
+      body { background-color: white; }
       .buttons {
-                margin-left: 15px;
+                margin-left: 18px;
                 margin-bottom: 20px;
             }
   </style>
@@ -18,28 +18,23 @@
     <svg id="canvas" height='500' width='800'></svg>
     <br />
         <div class="buttons">
-            <button onclick="t.timeStep(); update();">Step</button>
+            <button onclick="t.timeStep(); drawPlants();">Step</button>
             <button id="start" onclick="startInterval()">Start</button>
             <button id="stop" onclick="stopInterval()" disabled>Stop</button>
+            <button id="clearBtn" onclick="clearBtn()">Clear</button>
         </div>
 
     <script>
-      const gridWidth = 170
-      const gridHeight = 80
+      const tileWidth = 120
+      const tileHeight = 50
       const tileSize = 8
-      const intervalTime = 50
+      // milliseconds between every step when running automatically
+      const intervalTime = 150
+      // skips every <num> draw steps
+      const drawSkip = 1
 
-      var t = new TileWorld(gridWidth, gridHeight)
-      t.insert(new Plant(), 0, 30)
-      t.insert(new Plant(), 169, 50)
-
-      // for (let i = 1; i < 24; i++) {
-      //   t.insert(new Barrier(), 1, i)
-      // }
-      // for (let i = 2; i < 24; i++) {
-      //   t.insert(new Barrier(), i, 1)
-      // }
-      
+      var t = new TileWorld(tileWidth, tileHeight)
+      t.insert(new Plant(), 59, 25)
 
       let margin = {
         top: 20,
@@ -49,15 +44,15 @@
       }
 
       let svg = d3.select('#canvas')
-      svg.attr('width', gridWidth * tileSize + margin.left + margin.right)
-         .attr('height', gridHeight * tileSize + margin.top + margin.bottom)
+      svg.attr('width', tileWidth * tileSize + margin.left + margin.right)
+         .attr('height', tileHeight * tileSize + margin.top + margin.bottom)
 
       let width = svg.attr('width') - margin.left - margin.right
       let height = svg.attr('height') - margin.top - margin.bottom
       let g = svg.append('g').attr('transform', `translate(${margin.left}, ${margin.top})`)
 
-      let x = d3.scaleLinear().domain([0, t.width - 1]).range([0, width])
-      let y = d3.scaleLinear().domain([0, t.height - 1]).range([0, height])
+      let x = d3.scaleLinear().domain([0, t.width]).range([0, width])
+      let y = d3.scaleLinear().domain([0, t.height]).range([0, height])
 
       const filterOutBarriers = e => {
         if (e.obj) {
@@ -66,59 +61,81 @@
         }
         return true
       }
-      let squares = g.selectAll('rect').data(t.flatGrid.filter(filterOutBarriers))
-      let squareSize = tileSize - 1
 
-      squares.enter()
-        .append('rect')
-          .attr('x', d => x(d.xloc) - (squareSize / 2))
-          .attr('y', d => y(d.yloc) - (squareSize / 2))
-          .attr('width', squareSize)
-          .attr('height', squareSize)
-          .attr('stroke', 'lightgrey')
-          .attr('fill', 'white')
-        
+      // world borders
+      g.append('rect')
+        .attr('x', -2)
+        .attr('y', -2)
+        .attr('width', width + 4)
+        .attr('height', height + 4)
+        .attr('rx', 1)
+        .attr('ry', 1)
+        .attr('fill', '#f5f5f5')
+        .attr('stroke', 'grey')
+        .attr('stroke-width', 1)
 
       // plants
       let p = svg.append('g').attr('transform', `translate(${margin.left}, ${margin.top})`)
+
       const getPlantSize = d => {
         let fullSize = tileSize - 1
+        if (!d.obj) return .25 * fullSize
         return d.obj.size / 4 * fullSize
       }
+
       const getPlantColor = d => {
+        if (!d.obj) return 'none'
         return Tools.getHexColor(d.obj.color)
       }
-
-      let update = () => {
-        p.selectAll('rect').remove()
-        let plants = p.selectAll('rect').data(t.flatGrid.filter(e => e.obj))
-        plants.enter()
-          .append('rect')
-            .attr('x', d => x(d.xloc) - (getPlantSize(d) / 2))
-            .attr('y', d => y(d.yloc) - (getPlantSize(d) / 2))
-            .attr('rx', 1)
-            .attr('ry', 1)
-            .attr('width', getPlantSize)
-            .attr('height', getPlantSize)
-            .attr('fill', getPlantColor)
-      }
       
-      update()
+      p.selectAll('rect').data(t.flatGrid)
+        .enter()
+        .append('rect')
+          .attr('fill', getPlantColor)
+          .attr('rx', 1)
+          .attr('ry', 1)
+          .attr('x', d => x(d.xloc) + (tileSize / 2) - (getPlantSize(d) / 2))
+          .attr('y', d => y(d.yloc) + (tileSize / 2) - (getPlantSize(d) / 2))
+          .attr('width', getPlantSize)
+          .attr('height', getPlantSize)
+      
+      function drawPlants () {
+        p.selectAll('rect').data(t.flatGrid).transition().duration(intervalTime / 2)
+          .attr('fill', getPlantColor)
+          .attr('x', d => x(d.xloc) + (tileSize / 2) - (getPlantSize(d) / 2))
+          .attr('y', d => y(d.yloc) + (tileSize / 2) - (getPlantSize(d) / 2))
+          .attr('width', getPlantSize)
+          .attr('height', getPlantSize)
+      }
 
       let interval
-      let startInterval = () => {
+      const startInterval = () => {
           d3.select('#start').attr('disabled', true)
           d3.select('#stop').attr('disabled', null)
+          let step = 0
           interval = d3.interval(() => {
-              t.timeStep()
-              update()
+            step++
+            t.timeStep()
+            if (step % drawSkip === 0)
+              drawPlants()
           }, intervalTime)
       }
 
-      let stopInterval = () => {
+      const stopInterval = () => {
           d3.select('#start').attr('disabled', null)
           d3.select('#stop').attr('disabled', true)
           interval.stop()
+      }
+
+      const clearBtn = () => {
+        for (let i = 0; i < t.flatGrid.length; i++) {
+          t.flatGrid[i].obj = null
+        }
+        let newX = Tools.getRand(0, tileWidth - 1)
+        let newY = Tools.getRand(0, tileHeight - 1)
+        let newColor = Tools.getRand(0, 999)
+        t.insert(new Plant(newColor), newX, newY)
+        drawPlants()
       }
     </script>
   </body>
