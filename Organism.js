@@ -6,13 +6,19 @@ function Plant (color = 0) {
   this.size = 1
   this.tile = {}
   this.color = color
+  this.doneGrowing = false
 
   this.propagate = function () {
+    if (this.doneGrowing) return
     let neighbors = this.tile.world.getNeighbors(this.tile.xloc, this.tile.yloc)
-    if (neighbors.length < 1) return
-    let index = Math.floor(Math.random() * neighbors.length)
-    let chosenTile = neighbors[index]
-    if (!chosenTile.obj) {
+    let openNeighbors = neighbors.filter(e => !e.obj)
+    if (openNeighbors.length < 1) {
+      this.doneGrowing = true
+      return
+    }
+    let index = Tools.getRand(0, openNeighbors.length - 1)
+    let chosenTile = openNeighbors[index]
+    if (Tools.roll(5)) {
       // how fast the plant color mutates
       let newColor = this.color + Tools.getRand(-75, 75)
       // these should correlate to the steps in Tools.getHexColor
